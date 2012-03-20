@@ -1,8 +1,8 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{ruby-debug-base19}
-  s.version = "0.12.0"
+  s.name = %q{ruby-debug-base193}
+  s.version = "0.0.1"
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kent Sibilev", "Mark Moseley"]
   s.date = %q{2009-09-08}
@@ -45,7 +45,7 @@ handling, bindings for stack frames among other things.
   s.extensions << "ext/ruby_debug/extconf.rb"
   s.add_dependency("columnize", ">= 0.3.1")
   s.add_dependency("ruby_core_source", ">= 0.1.4")
-  s.add_dependency("linecache19", ">= 0.5.11")
+  s.add_dependency("linecache193", ">= 0.0.1")
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
