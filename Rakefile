@@ -1,9 +1,12 @@
 #!/usr/bin/env rake
 # -*- Ruby -*-
 require 'rubygems'
-require 'rake/gempackagetask'
-require 'rake/rdoctask'
+#require 'rake/gempackagetask'
+require 'rubygems/package_task'
+require 'rdoc/task'
 require 'rake/testtask'
+
+# gem install rake-compiler
 require 'rake/extensiontask'
 
 Rake::ExtensionTask.new('ruby_debug')
@@ -11,7 +14,7 @@ Rake::ExtensionTask.new('ruby_debug')
 SO_NAME = "ruby_debug.so"
 
 # ------- Default Package ----------
-RUBY_DEBUG_VERSION = open("ext/ruby_debug/ruby_debug.c") do |f| 
+RUBY_DEBUG_VERSION = open("ext/ruby_debug/ruby_debug.c") do |f|
   f.grep(/^#define DEBUG_VERSION/).first[/"(.+)"/,1]
 end
 
@@ -24,12 +27,12 @@ COMMON_FILES = FileList[
   'LICENSE',
   'README',
   'Rakefile',
-]                        
+]
 
 CLI_TEST_FILE_LIST = FileList['test/cli/commands/unit/*.rb',
-                              'test/cli/commands/*_test.rb', 
-                              'test/cli/**/*_test.rb', 
-                              'test/test-*.rb'] 
+                              'test/cli/commands/*_test.rb',
+                              'test/cli/**/*_test.rb',
+                              'test/test-*.rb']
 CLI_FILES = COMMON_FILES + FileList[
   "cli/**/*",
   'ChangeLog',
@@ -43,8 +46,8 @@ CLI_FILES = COMMON_FILES + FileList[
 ]
 
 BASE_TEST_FILE_LIST = %w(
-  test/base/base.rb 
-  test/base/binding.rb 
+  test/base/base.rb
+  test/base/binding.rb
   test/base/catchpoint.rb)
 BASE_FILES = COMMON_FILES + FileList[
   'ext/ruby_debug/breakpoint.c',
@@ -57,7 +60,7 @@ BASE_FILES = COMMON_FILES + FileList[
 ]
 
 desc "Test everything."
-task :test => :test_base do 
+task :test => :test_base do
   Rake::TestTask.new(:test) do |t|
     t.libs << './ext'
     t.libs << './lib'
@@ -68,7 +71,7 @@ task :test => :test_base do
 end
 
 desc "Test ruby-debug-base."
-task :test_base => :lib do 
+task :test_base => :lib do
   Rake::TestTask.new(:test_base) do |t|
     t.libs << './ext'
     t.libs << './lib'
@@ -105,13 +108,13 @@ end
 # Base GEM Specification
 base_spec = Gem::Specification.new do |spec|
   spec.name = "ruby-debug-base19"
-  
+
   spec.homepage = "http://rubyforge.org/projects/ruby-debug19/"
   spec.summary = "Fast Ruby debugger - core component"
   spec.description = <<-EOF
 ruby-debug-base19 is a fast implementation of the standard Ruby debugger debug.rb.
-It is implemented by utilizing a new Ruby C API hook. The core component 
-provides support that front-ends can build on. It provides breakpoint 
+It is implemented by utilizing a new Ruby C API hook. The core component
+provides support that front-ends can build on. It provides breakpoint
 handling, bindings for stack frames among other things.
 EOF
 
@@ -122,16 +125,16 @@ EOF
   spec.platform = Gem::Platform::RUBY
   spec.require_path = "lib"
   spec.extensions = ["ext/ruby_debug/extconf.rb"]
-  spec.files = BASE_FILES.to_a  
+  spec.files = BASE_FILES.to_a
 
-  spec.required_ruby_version = '>= 1.8.2'
+  spec.required_ruby_version = '>= 1.9.0'
   spec.date = Time.now
   spec.rubyforge_project = 'ruby-debug19'
   spec.add_dependency('ruby_core_source', '>= 0.1.4')
   spec.add_dependency('linecache19', '>= 0.5.11')
-  
+
   spec.test_files = FileList[BASE_TEST_FILE_LIST]
-  
+
   # rdoc
   spec.has_rdoc = true
   spec.extra_rdoc_files = ['README', 'ext/ruby_debug/ruby_debug.c']
@@ -139,7 +142,7 @@ end
 
 cli_spec = Gem::Specification.new do |spec|
   spec.name = "ruby-debug19"
-  
+
   spec.homepage = "http://rubyforge.org/projects/ruby-debug19/"
   spec.summary = "Command line interface (CLI) for ruby-debug-base19"
   spec.description = <<-EOF
@@ -156,13 +159,13 @@ EOF
   spec.executables = ["rdebug"]
   spec.files = CLI_FILES.to_a
 
-  spec.required_ruby_version = '>= 1.8.2'
+  spec.required_ruby_version = '>= 1.9.0'
   spec.date = Time.now
   spec.rubyforge_project = 'ruby-debug'
   spec.add_dependency('columnize', '>= 0.3.1')
   spec.add_dependency('linecache19', '>= 0.5.11')
   spec.add_dependency('ruby-debug-base19', '>= 0.12.0')
-  
+
   # FIXME: work out operational logistics for this
   # spec.test_files = FileList[CLI_TEST_FILE_LIST]
 
@@ -172,11 +175,25 @@ EOF
 end
 
 # Rake task to build the default package
-Rake::GemPackageTask.new(base_spec) do |pkg|
-  pkg.need_tar = true
+namespace :base do
+  Gem::PackageTask.new(base_spec) do |pkg|
+    pkg.need_tar = true
+  end
+
+  desc "Write #{base_spec.spec_name}"
+  task :spec do
+    File.open(base_spec.spec_name, 'w'){|f| f.write(base_spec.to_ruby)}
+  end
 end
-Rake::GemPackageTask.new(cli_spec) do |pkg|
-  pkg.need_tar = true
+
+namespace :cli do
+  Gem::PackageTask.new(cli_spec) do |pkg|
+    pkg.need_tar = true
+  end
+  desc "Write #{cli_spec.spec_name}"
+  task :spec do
+    File.open(cli_spec.spec_name, 'w'){|f| f.write(cli_spec.to_ruby)}
+  end
 end
 
 task :default => [:package]
@@ -206,9 +223,9 @@ task :win32_gem do
 end
 
 desc "Publish ruby-debug to RubyForge."
-task :publish do 
+task :publish do
   require 'rake/contrib/sshpublisher'
-  
+
   # Get ruby-debug path.
   ruby_debug_path = File.expand_path(File.dirname(__FILE__))
 
